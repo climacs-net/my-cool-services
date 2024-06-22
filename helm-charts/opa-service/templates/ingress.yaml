@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: opa-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  rules:
+    - host: "opa.malamig-na-serbisyo.climacs.net"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: opa-service
+                port:
+                  number: 8181
+  tls:
+    - hosts:
+        - "opa.malamig-na-serbisyo.climacs.net"
+      secretName: opa-service-tls

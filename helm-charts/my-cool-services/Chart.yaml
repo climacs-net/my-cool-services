@@ -1,0 +1,5 @@
+apiVersion: v2
+name: my-cool-service
+description: A Helm chart for my-cool-service
+version: 0.1.0
+appVersion: "1.0"

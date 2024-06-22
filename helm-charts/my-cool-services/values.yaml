@@ -1,0 +1,7 @@
+replicas: 2
+image:
+  repository: your-docker-repo/my-cool-service #remember to upload the my-cool-service either via hub.docker.com or own nexusdemo.climacs.net (repo not yet setup)
+  tag: latest
+service:
+  type: ClusterIP
+  port: 8000

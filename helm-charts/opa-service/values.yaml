@@ -1,0 +1,7 @@
+replicas: 1
+image:
+  repository: openpolicyagent/opa
+  tag: edge-rootless
+service:
+  type: ClusterIP
+  port: 8181

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-cool-service
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: my-cool-service
+  template:
+    metadata:
+      labels:
+        app: my-cool-service
+    spec:
+      containers:
+        - name: my-cool-service
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 8000
+          env:
+            - name: OPA_URL
+              value: "https://malamig-na-serbisyo.climacs.net/v1/data/authz/allow"

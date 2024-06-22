@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opa-policy
+data:
+  policy.rego: |
+    package authz
+
+    default allow = false
+
+    allow {
+        input.method == "GET"
+        valid_user
+    }
+
+    allow {
+        input.method == "POST"
+        valid_admin
+    }
+
+    valid_user {
+        # Define your logic to validate user token
+    }
+
+    valid_admin {
+        # Define your logic to validate admin token
+    }

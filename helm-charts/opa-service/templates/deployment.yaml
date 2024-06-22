@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opa-service
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: opa-service
+  template:
+    metadata:
+      labels:
+        app: opa-service
+    spec:
+      containers:
+        - name: opa
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 8181
+          args:
+            - "run"
+            - "--server"
+          volumeMounts:
+            - mountPath: /policy
+              name: policy-volume
+      volumes:
+        - name: policy-volume
+          configMap:
+            name: opa-policy
