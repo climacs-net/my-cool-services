@@ -6,7 +6,6 @@
     minikube_memory: "6000"
     minikube_cpus: "2"
     domain_name: "malamig-na-serbisyo.climacs.net"
-    opa_domain_name: "opa.malamig-na-serbisyo.climacs.net"
     email: "your-email@example.com"
 
   tasks:
@@ -15,7 +14,7 @@
         name: "{{ item }}"
         state: present
         update_cache: yes
-      with_items:
+      loop:
         - curl
         - wget
         - docker.io
@@ -36,38 +35,55 @@
         groups: docker
         append: true
 
-    - name: Install Minikube
+    - name: Install Minikube if not installed
       get_url:
         url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
         dest: /usr/local/bin/minikube
         mode: '0755'
+      register: minikube_install
+      until: minikube_install is succeeded
+      retries: 3
+      delay: 5
 
-    - name: Install kubectl
+    - name: Install kubectl if not installed
       get_url:
         url: "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
         dest: /usr/local/bin/kubectl
         mode: '0755'
+      register: kubectl_install
+      until: kubectl_install is succeeded
+      retries: 3
+      delay: 5
 
-    - name: Install Helm
+    - name: Install Helm if not installed
       shell: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      args:
+        creates: /usr/local/bin/helm
 
     - name: Start Minikube
       shell: minikube start --memory {{ minikube_memory }} --cpus {{ minikube_cpus }}
+      register: minikube_start
+      until: minikube_start is succeeded
+      retries: 3
+      delay: 10
 
-    - name: Install ArgoCD
+    - name: Install ArgoCD if not installed
       shell: |
-        kubectl create namespace argocd
+        kubectl get namespace argocd || kubectl create namespace argocd
         kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+      args:
+        creates: /etc/kubernetes/argocd_installed
 
     - name: Forward ArgoCD server port
       shell: kubectl port-forward svc/argocd-server -n argocd 8080:443 &
       async: 30
       poll: 0
 
-    - name: Clone Helm chart repository
+    - name: Clone Helm chart repository if not present
       git:
-        repo: https://github.com/your-repo/helm-charts.git
+        repo: https://github.com/climacs-net/my-cool-services.git
         dest: /home/{{ ansible_user }}/helm-charts
+        update: no
 
     - name: Apply ArgoCD Application Manifest
       copy:
@@ -80,9 +96,9 @@
           spec:
             project: default
             source:
-              repoURL: 'https://github.com/your-repo/helm-charts'
-              targetRevision: HEAD
-              path: my-cool-service
+              repoURL: 'https://github.com/climacs-net/my-cool-services'
+              targetRevision: main
+              path: helm-charts/my-cool-service
             destination:
               server: 'https://kubernetes.default.svc'
               namespace: default
@@ -95,17 +111,18 @@
     - name: Apply ArgoCD Application
       shell: kubectl apply -f /home/{{ ansible_user }}/argo-app.yaml
 
-    - name: Install NGINX Ingress Controller
+    - name: Install NGINX Ingress Controller if not installed
       shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+      args:
+        creates: /etc/kubernetes/nginx_ingress_installed
 
     - name: Wait for NGINX Ingress Controller to be ready
-      shell: kubectl wait --namespace ingress-nginx \
-             --for=condition=ready pod \
-             --selector=app.kubernetes.io/component=controller \
-             --timeout=90s
+      shell: kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=90s
 
-    - name: Install Cert-Manager
+    - name: Install Cert-Manager if not installed
       shell: kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.6.1/cert-manager.yaml
+      args:
+        creates: /etc/kubernetes/cert_manager_installed
 
     - name: Create ClusterIssuer for Let's Encrypt
       copy:
@@ -152,6 +169,16 @@
                       name: my-cool-service
                       port:
                         number: 8000
+            - host: "{{ domain_name }}"
+              http:
+                paths:
+                - path: /opa
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: opa-service
+                      port:
+                        number: 8181
             tls:
             - hosts:
               - "{{ domain_name }}"
@@ -161,41 +188,46 @@
     - name: Apply Ingress Resource
       shell: kubectl apply -f /home/{{ ansible_user }}/ingress.yaml
 
-    - name: Create Ingress Resource for OPA
+    - name: Create ConfigMap for OPA Policy
       copy:
         content: |
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
+          apiVersion: v1
+          kind: ConfigMap
           metadata:
-            name: opa-ingress
-            annotations:
-              cert-manager.io/cluster-issuer: "letsencrypt"
-              nginx.ingress.kubernetes.io/ssl-redirect: "true"
-          spec:
-            rules:
-            - host: "{{ opa_domain_name }}"
-              http:
-                paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: opa-service
-                      port:
-                        number: 8181
-            tls:
-            - hosts:
-              - "{{ opa_domain_name }}"
-              secretName: opa-service-tls
-        dest: /home/{{ ansible_user }}/opa-ingress.yaml
+            name: opa-policy
+          data:
+            policy.rego: |
+              package authz
 
-    - name: Apply OPA Ingress Resource
-      shell: kubectl apply -f /home/{{ ansible_user }}/opa-ingress.yaml
+              default allow = false
 
-    - name: Install Swagger UI
+              allow {
+                  input.method == "GET"
+                  valid_user
+              }
+
+              allow {
+                  input.method == "POST"
+                  valid_admin
+              }
+
+              valid_user {
+                  token = input.token
+              }
+
+              valid_admin {
+                  token = input.token
+                  role = "admin"
+              }
+        dest: /home/{{ ansible_user }}/opa-policy-configmap.yaml
+
+    - name: Apply OPA Policy ConfigMap
+      shell: kubectl apply -f /home/{{ ansible_user }}/opa-policy-configmap.yaml
+
+    - name: Install Swagger UI if not installed
       shell: |
-        kubectl create deployment swagger-ui --image=swaggerapi/swagger-ui
-        kubectl expose deployment swagger-ui --type=NodePort --port=8080
+        kubectl get deployment swagger-ui || kubectl create deployment swagger-ui --image=swaggerapi/swagger-ui
+        kubectl get svc swagger-ui || kubectl expose deployment swagger-ui --type=NodePort --port=8080
         kubectl apply -f - <<EOF
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -206,10 +238,10 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   rules:
-  - host: "swagger.malamig-na-serbisyo.climacs.net"
+  - host: "malamig-na-serbisyo.climacs.net"
     http:
       paths:
-      - path: /
+      - path: /swagger
         pathType: Prefix
         backend:
           service:
@@ -218,6 +250,6 @@ spec:
               number: 8080
   tls:
   - hosts:
-    - "swagger.malamig-na-serbisyo.climacs.net"
-    secretName: swagger-ui-tls
+    - "malamig-na-serbisyo.climacs.net"
+    secretName: my-cool-service-tls
 EOF
