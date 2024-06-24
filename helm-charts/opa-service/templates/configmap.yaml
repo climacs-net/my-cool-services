@@ -19,9 +19,10 @@ data:
     }
 
     valid_user {
-        # Define your logic to validate user token
+        token = input.token
     }
 
     valid_admin {
-        # Define your logic to validate admin token
+        token = input.token
+        role = "admin"
     }

@@ -7,10 +7,10 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   rules:
-    - host: "opa.malamig-na-serbisyo.climacs.net"
+    - host: "malamig-na-serbisyo.climacs.net"
       http:
         paths:
-          - path: /
+          - path: /opa
             pathType: Prefix
             backend:
               service:
@@ -19,5 +19,5 @@ spec:
                   number: 8181
   tls:
     - hosts:
-        - "opa.malamig-na-serbisyo.climacs.net"
-      secretName: opa-service-tls
+        - "malamig-na-serbisyo.climacs.net"
+      secretName: my-cool-service-tls
