@@ -6,9 +6,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/climacs-net/helm-charts' #https://github.com/climacs-net/my-cool-services/tree/main/helm-charts
-    targetRevision: HEAD
-    path: my-cool-service
+    repoURL: 'https://github.com/climacs-net/my-cool-services'
+    targetRevision: main
+    path: helm-charts/my-cool-service
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: default
