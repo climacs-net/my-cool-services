@@ -9,7 +9,7 @@ resource "aws_key_pair" "deployer" {
 
 resource "aws_instance" "minikube" {
   ami               = "ami-04ffc9f7871904759" # Ubuntu Server 22.04 LTS (HVM)
-  instance_type     = "t3.medium"
+  instance_type     = "t3.large"
   availability_zone = "us-east-1b"
   key_name          = aws_key_pair.deployer.key_name
 
