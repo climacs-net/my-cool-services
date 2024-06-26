@@ -63,6 +63,9 @@ terraform init
 terraform apply
 ```
 
+## Note: 
+After the Terraform apply completes, copy the IP address from the output and manually add it to the Ansible inventory file.
+
 ### 2. Deploy the Application with Ansible
 
 Navigate to the `ansible` directory and run the following command to deploy the Kubernetes cluster and the application:
@@ -103,6 +106,7 @@ Use the provided Postman collection to test the endpoints. Import the collection
 
 ## Additional Notes
 
+- If you need to add a new key pair or adjust the code for an existing key pair, you must update the Terraform script accordingly.
 - Ensure all services are up and running in the Kubernetes cluster.
 - Check DNS configurations to make sure the FQDN points to the correct IP.
 - The OPA policy is critical for authorization and should be thoroughly tested.
