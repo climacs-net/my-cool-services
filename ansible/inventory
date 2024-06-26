@@ -1,3 +1,4 @@
 [minikube]
-3.229.20.180
+3.229.20.180 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_ed25519
+
 
