@@ -64,7 +64,7 @@
         creates: /usr/local/bin/helm
 
     - name: Start Minikube
-      shell: minikube start --memory {{ minikube_memory }} --cpus {{ minikube_cpus }}
+      shell: minikube start --memory {{ minikube_memory }} --cpus {{ minikube_cpus }} --driver=none
       register: minikube_start
       until: minikube_start is succeeded
       retries: 3
