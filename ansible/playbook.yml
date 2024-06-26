@@ -21,6 +21,7 @@
         - python3-pip
         - git
         - socat
+        - conntrack  # Added conntrack
 
     - name: Start and enable Docker
       service:
@@ -64,7 +65,7 @@
         creates: /usr/local/bin/helm
 
     - name: Start Minikube
-      shell: minikube start --memory {{ minikube_memory }} --cpus {{ minikube_cpus }} --driver=none
+      shell: minikube start --driver=none  # Removed --cpus and --memory flags
       register: minikube_start
       until: minikube_start is succeeded
       retries: 3
