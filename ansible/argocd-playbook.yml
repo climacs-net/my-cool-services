@@ -1,0 +1,41 @@
+---
+- name: Configure Ingress for ArgoCD
+  hosts: minikube
+  become: true
+  vars:
+    domain_name: "argocd.malamig-na-serbisyo.climacs.net"
+
+  tasks:
+    - name: Create Ingress Resource for ArgoCD
+      copy:
+        content: |
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: argocd-server-ingress
+            namespace: argocd
+            annotations:
+              cert-manager.io/cluster-issuer: "letsencrypt"
+              nginx.ingress.kubernetes.io/rewrite-target: /
+              nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          spec:
+            rules:
+            - host: "{{ domain_name }}"
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: argocd-server
+                      port:
+                        number: 443
+            tls:
+            - hosts:
+              - "{{ domain_name }}"
+              secretName: argocd-tls
+        dest: /home/{{ ansible_user }}/argocd-ingress.yaml
+
+    - name: Apply ArgoCD Ingress Resource
+      shell: kubectl apply -f /home/{{ ansible_user }}/argocd-ingress.yaml
+

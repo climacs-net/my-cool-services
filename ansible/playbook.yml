@@ -228,28 +228,34 @@
       shell: |
         kubectl get deployment swagger-ui || kubectl create deployment swagger-ui --image=swaggerapi/swagger-ui
         kubectl get svc swagger-ui || kubectl expose deployment swagger-ui --type=NodePort --port=8080
-        kubectl apply -f - <<EOF
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: swagger-ui-ingress
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-spec:
-  rules:
-  - host: "malamig-na-serbisyo.climacs.net"
-    http:
-      paths:
-      - path: /swagger
-        pathType: Prefix
-        backend:
-          service:
-            name: swagger-ui
-            port:
-              number: 8080
-  tls:
-  - hosts:
-    - "malamig-na-serbisyo.climacs.net"
-    secretName: my-cool-service-tls
-EOF
+
+    - name: Create Ingress Resource for Swagger UI
+      copy:
+        content: |
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: swagger-ui-ingress
+            annotations:
+              cert-manager.io/cluster-issuer: "letsencrypt"
+              nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          spec:
+            rules:
+            - host: "malamig-na-serbisyo.climacs.net"
+              http:
+                paths:
+                - path: /swagger
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: swagger-ui
+                      port:
+                        number: 8080
+            tls:
+            - hosts:
+              - "malamig-na-serbisyo.climacs.net"
+              secretName: my-cool-service-tls
+        dest: /home/{{ ansible_user }}/swagger-ui-ingress.yaml
+
+    - name: Apply Ingress Resource for Swagger UI
+      shell: kubectl apply -f /home/{{ ansible_user }}/swagger-ui-ingress.yaml
