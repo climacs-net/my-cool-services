@@ -5,7 +5,8 @@
     minikube_memory: "6000"
     minikube_cpus: "2"
     domain_name: "malamig-na-serbisyo.climacs.net"
-    email: "your-email@example.com"
+    email: "climacs@climacs.net"
+    crictl_version: "v1.24.2"
 
   tasks:
     - name: Update and install necessary packages
@@ -63,6 +64,17 @@
       shell: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
       args:
         creates: /usr/local/bin/helm
+
+    - name: Install crictl
+      get_url:
+        url: "https://github.com/kubernetes-sigs/cri-tools/releases/download/{{ crictl_version }}/crictl-{{ crictl_version }}-linux-amd64.tar.gz"
+        dest: /tmp/crictl.tar.gz
+
+    - name: Extract and install crictl
+      unarchive:
+        src: /tmp/crictl.tar.gz
+        dest: /usr/local/bin/
+        remote_src: yes
 
     - name: Start Minikube
       shell: minikube start --driver=none  # Removed --cpus and --memory flags
