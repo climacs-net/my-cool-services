@@ -10,14 +10,14 @@ users = {
     "miguelnero.climacosa@gmail.com": "user"
 }
 
-# Allow users with "admin" role to perform POST requests
+# Allow users with "admin" role to perform POST requests (create users)
 allow {
     input.method == "POST"
     users[input.token] == "admin"
 }
 
-# Allow users with "user" role to perform GET requests
+# Allow authenticated users (any valid token) to perform GET requests (read users)
 allow {
     input.method == "GET"
-    users[input.token] == "user"
+    users[input.token]
 }

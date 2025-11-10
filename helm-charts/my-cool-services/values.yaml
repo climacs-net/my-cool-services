@@ -1,7 +1,8 @@
-replicas: 2
+replicas: 1
 image:
-  repository: your-docker-repo/my-cool-service
+  repository: climacs/my-cool-service
   tag: latest
 service:
-  type: ClusterIP
-  port: 8000
+  type: NodePort
+  port: 80
+  nodePort: 30001

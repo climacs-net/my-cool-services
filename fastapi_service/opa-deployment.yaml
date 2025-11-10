@@ -15,20 +15,19 @@ spec:
     spec:
       containers:
       - name: opa
-        image: openpolicyagent/opa:latest
+        image: openpolicyagent/opa:edge-rootless
+        ports:
+        - containerPort: 8181
         args:
         - "run"
         - "--server"
-        - "--config-file=/config/config.yaml"
+        - "--log-level=debug"
+        - "--log-format=json"
+        - "/policies/policy.rego"
         volumeMounts:
-        - mountPath: /config
-          name: config-volume
-        - mountPath: /policy
+        - mountPath: /policies
           name: policy-volume
       volumes:
-      - name: config-volume
-        configMap:
-          name: opa-config
       - name: policy-volume
         configMap:
           name: opa-policy

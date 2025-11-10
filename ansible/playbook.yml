@@ -114,7 +114,7 @@
             source:
               repoURL: 'https://github.com/climacs-net/my-cool-services'
               targetRevision: main
-              path: helm-charts/my-cool-service
+              path: helm-charts/my-cool-services
             destination:
               server: 'https://kubernetes.default.svc'
               namespace: default

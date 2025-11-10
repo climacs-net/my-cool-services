@@ -19,4 +19,4 @@ spec:
         - containerPort: 80
         env:
         - name: OPA_URL
-          value: "http://opa-service.opa.svc.cluster.local/v1/data/authz/allow"
+          value: "http://opa-service.default.svc.cluster.local:8181/v1/data/authz/allow"

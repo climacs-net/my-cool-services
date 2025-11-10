@@ -22,5 +22,5 @@ data:
 
     allow {
         input.method == "GET"
-        users[input.token] == "user"
+        users[input.token]
     }
