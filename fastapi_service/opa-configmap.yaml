@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opa-policy
+  namespace: default
+data:
+  policy.rego: |
+    package authz
+
+    default allow = false
+
+    users = {
+        "climacs@gmail.com": "admin",
+        "climacs@climacs.net": "user",
+        "miguelnero.climacosa@gmail.com": "user"
+    }
+
+    allow {
+        input.method == "POST"
+        users[input.token] == "admin"
+    }
+
+    allow {
+        input.method == "GET"
+        users[input.token] == "user"
+    }

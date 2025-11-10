@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opa-config
+  namespace: default
+data:
+  config.yaml: |
+    services:
+      - name: example
+        url: http://localhost:8181/v1
+    labels:
+      app: "opa"
+    discovery:
+      name: /policy
+      prefix: config
+    bundle:
+      name: example
+      service: example
+      resource: example/bundle.tar.gz
+    plugins:
+      - name: http.send
+        service: example

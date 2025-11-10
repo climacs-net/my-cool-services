@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  opa:
+    image: openpolicyagent/opa:latest
+    container_name: opa-service
+    ports:
+      - "8181:8181"
+    command:
+      - "run"
+      - "--server"
+      - "--log-level=debug"
+      - "/policies/policy.rego"
+    volumes:
+      - ./fastapi_service/policy.rego:/policies/policy.rego
+    networks:
+      - app-network
+
+  fastapi:
+    build:
+      context: ./fastapi_service/app
+      dockerfile: Dockerfile
+    container_name: fastapi-service
+    ports:
+      - "8000:80"
+    environment:
+      - OPA_URL=http://opa:8181/v1/data/authz/allow
+    volumes:
+      - ./fastapi_service/app:/app
+    depends_on:
+      - opa
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

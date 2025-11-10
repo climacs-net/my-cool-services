@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opa
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opa
+  template:
+    metadata:
+      labels:
+        app: opa
+    spec:
+      containers:
+      - name: opa
+        image: openpolicyagent/opa:latest
+        args:
+        - "run"
+        - "--server"
+        - "--config-file=/config/config.yaml"
+        volumeMounts:
+        - mountPath: /config
+          name: config-volume
+        - mountPath: /policy
+          name: policy-volume
+      volumes:
+      - name: config-volume
+        configMap:
+          name: opa-config
+      - name: policy-volume
+        configMap:
+          name: opa-policy
